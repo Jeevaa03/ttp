@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Student Management System{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>Student Dashboard</h1>
+    <p>View your activities and submit assignments</p>
+</div>
+
+<div class="main-content">
+    <!-- Quick Stats -->
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Updated Stats Grid</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            padding: 2rem;
+            animation: background-shift 8s ease-in-out infinite;
+        }
+        
+        @keyframes background-shift {
+            0%, 100% {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            }
+            33% {
+                background: linear-gradient(135deg, #f093fb 0%, #667eea 50%, #764ba2 100%);
+            }
+            66% {
+                background: linear-gradient(135deg, #764ba2 0%, #f093fb 50%, #667eea 100%);
+            }
+        }
+        
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .stat-card {
+            border: none;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #c4b5fd 0%, #93c5fd 100%);
+            box-shadow: 0 8px 32px rgba(196, 181, 253, 0.3);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 16px;
+            padding: 2px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-3 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            body {
+                padding: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1.5rem;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-number {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid grid-3" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+            <div class="stat-number" style="color: #8b5cf6;">25</div>
+            <div class="stat-label">Total Activities</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" style="color: #3b82f6;">18</div>
+            <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" style="color: #6366f1;">7</div>
+            <div class="stat-label">Pending</div>
+        </div>
+    </div>
+
+    <!-- Activities -->
+    <div class="card">
+        <h3>📚 Your Activities</h3>
+        {% if activities %}
+            {% for activity in activities %}
+            {% set submission = submissions.get(activity.id) %}
+            <div class="activity-card {% if submission %}completed{% else %}pending{% endif %}">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <h4 style="margin: 0; color: #1f2937;">{{ activity.title }}</h4>
+                            <div class="status-badge {% if submission %}status-completed{% else %}status-pending{% endif %}">
+                                {% if submission %}
+                                    ✅ Submitted
+                                {% else %}
+                                    ⏳ Pending
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if activity.description %}
+                        <p style="color: #6b7280; margin-bottom: 1rem;">{{ activity.description }}</p>
+                        {% endif %}
+                        
+                        <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: #9ca3af; margin-bottom: 1rem;">
+                            <span>👤 Assigned by: {{ activity.assigned_by_user.name }}</span>
+                            {% if activity.due_date %}
+                            <span>📅 Due: {{ activity.due_date }}</span>
+                            {% endif %}
+                            <span>📅 Created: {{ activity.created_at|datetime }}</span>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            {% if activity.resource_file %}
+                            <a href="{{ url_for('download_file', filename=activity.resource_file) }}" 
+                               class="btn btn-info" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                                📎 Download Resources
+                            </a>
+                            {% endif %}
+                            
+                            {% if submission %}
+                                <div class="btn btn-success" style="font-size: 0.875rem; padding: 0.5rem 1rem; cursor: default;">
+                                    ✅ Submitted on {{ submission.submitted_at|datetime }}
+                                </div>
+                                {% if submission.submitted_file %}
+                                <a href="{{ url_for('download_file', filename=submission.submitted_file) }}" 
+                                   class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                                    💾 View My Submission
+                                </a>
+                                {% endif %}
+                            {% else %}
+                                <button onclick="showSubmissionForm({{ activity.id }})" 
+                                        class="btn" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                                    📤 Submit Assignment
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submission Form (Hidden by default) -->
+                {% if not submission %}
+                <div id="submission-form-{{ activity.id }}" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                    <h5 style="margin-bottom: 1rem; color: #1f2937;">📤 Submit Your Assignment</h5>
+                    <form method="POST" action="{{ url_for('submit_activity', activity_id=activity.id) }}" 
+                          enctype="multipart/form-data" onsubmit="return handleSubmission(event, {{ activity.id }})">
+                        <div class="form-group">
+                            <label for="submission_file_{{ activity.id }}">📎 Upload Your Work:</label>
+                            <div class="file-upload-area">
+                                <input type="file" id="submission_file_{{ activity.id }}" name="submission_file" 
+                                       accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.gif"
+                                       style="display: none;" required>
+                                <div onclick="document.getElementById('submission_file_{{ activity.id }}').click();" style="cursor: pointer;">
+                                    <p style="margin-bottom: 0.5rem;">📁 Click to select your file</p>
+                                    <p style="font-size: 0.875rem; color: #6b7280;">Supported: PDF, DOC, TXT, Images, ZIP, etc.</p>
+                                    <div class="file-info-{{ activity.id }}"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem;">
+                            <button type="submit" class="btn btn-success">
+                                🚀 Submit Assignment
+                            </button>
+                            <button type="button" onclick="hideSubmissionForm({{ activity.id }})" 
+                                    class="btn btn-secondary">
+                                ❌ Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; padding: 3rem; color: #6b7280;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📚</div>
+                <h3 style="margin-bottom: 1rem;">No Activities Assigned Yet</h3>
+                <p>Your instructor will assign activities here. Check back soon!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function showSubmissionForm(activityId) {
+    const form = document.getElementById(`submission-form-${activityId}`);
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideSubmissionForm(activityId) {
+    const form = document.getElementById(`submission-form-${activityId}`);
+    form.style.display = 'none';
+}
+
+function handleSubmission(event, activityId) {
+    const fileInput = document.getElementById(`submission_file_${activityId}`);
+    if (!fileInput.files.length) {
+        alert('Please select a file to submit.');
+        return false;
+    }
+    
+    // Show loading state
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; display: inline-block; margin-right: 0.5rem;"></div>Submitting...';
+    submitBtn.disabled = true;
+    
+    // Allow form submission to proceed
+    return true;
+}
+
+// File input change handlers
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const activityId = e.target.id.split('_').pop();
+            const fileInfo = document.querySelector(`.file-info-${activityId}`);
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                fileInfo.innerHTML = `<p style="color: #10b981; margin-top: 0.5rem;"><strong>Selected:</strong> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</p>`;
+            } else {
+                fileInfo.innerHTML = '';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
